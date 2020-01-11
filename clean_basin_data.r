@@ -27,13 +27,19 @@ kasky_stations <- stations %>% filter(PU_CODE == "kasky")
 names(kasky_stations) <- str_to_lower(names(kasky_stations))
 
 ## Convert basin "Waterbody Station" to readable format. 
-basin_stations <- unique(basin$`Waterbody Station`) %>% tibble()
+basin_stations <- unique(basin$`waterbody_station`) %>% tibble()
 basin_stations <- rename(basin_stations, Waterbody_Station = .)
 basin_stations$Station_Name <- stringr::str_extract(basin_stations$Waterbody_Station, ".*(?=:)")
 basin_stations$Waterbody_Location <- stringr::str_extract(basin_stations$Waterbody_Station, "(?<=:).*")
 
+####
+##
+# Extract from Basin$Waterbody the string in () call it something like "dupe"
+# The write a bit that looks for "dupe" before a "-" and extract out the info after the "-" in basin_stations$Station_Name
+
+
 # Split the station 
-stringr::str_split(basin_stations$Station_Name, "[:graph:]+", n = 2)
+# stringr::str_split(basin_stations$Station_Name, "[:graph:]+", n = 2)
 
 # Get Basin stations matched with locality info from kasky_stations
 
