@@ -5,7 +5,7 @@ library(tidyverse)
 # 2- Format data in the same style as CREP fish data
 # 3- Add CREP + Basin data together
 # 4- histogram stream size/order/link per data source
-# 
+#
 # I will need to locate a file that has the stream size for all of the CREP sites
 # I will also need to compile a file that ties the basin surveys to PU_Gap codes in kasky.
 ## See waterbody_stations_2010 csv from ArcGIS Attribute table atrribute table
@@ -31,7 +31,7 @@ kasky_stations<- rename(kasky_stations, station_code = station_co)
 #### Pull Waterbody Code from Waterbody Station:
 basin$dupe <- stringr::str_extract(basin$waterbody, "(?<=[:space:]\\([:space:])[:graph:]+")
 basin$dupe <- stringr::str_replace(basin$dupe, "\\)", "-")
-basin$station_location <- stringr::str_extract(basin$waterbody_station, "(?<=:).*")  
+basin$station_location <- stringr::str_extract(basin$waterbody_station, "(?<=:).*")
 basin$station_code_wrong <- stringr::str_extract(basin$waterbody_station, ".*(?=:)")
 
 ### The following code includes a quoting mechanism \Q...\E that allows you to exactly matach user input b/c all the characters in the ... are exact matches
