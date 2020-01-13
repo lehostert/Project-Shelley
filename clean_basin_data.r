@@ -47,12 +47,11 @@ basin$station_code_wrong <- stringr::str_extract(basin$waterbody_station, ".*(?=
 ### See the regular expressions stringr vinettes for more info <https://stringr.tidyverse.org/articles/regular-expressions.html>
 basin$station_code <- stringr::str_extract(basin$station_code_wrong,paste0("(?<=\\Q",basin$dupe,"\\E).*"))
 basin$reach_name <- basin$station_code
-
 basin <- basin %>% select(-c(station_code_wrong, dupe))
 
 ### Combine kasky station info with basin data and simplifly full basin survey dataset to simple dataset
 
-basin <- dplyr::left_join(basin, kasky_stations)
+basin <- dplyr::left_join(basin, kasky_stations, by = "station_code")
 basin$gear <- if_else(is.na(basin$gear_used), basin$gear_type, basin$gear_used)
 basin$date <- as.Date(basin$sample_start_date, format = "%m/%d/%Y")
 # basin_data <- basin %>% select(c(pugap_code, reach_name, date, species, count, gear))
@@ -64,14 +63,25 @@ basin$date <- as.Date(basin$sample_start_date, format = "%m/%d/%Y")
 crep <- read_csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Fish_Abundance_Data.csv", na = "", col_names = T)
 names(crep) <- str_to_lower(names(crep))
 crep$date <- as.Date(crep$event_date, format = "%m/%d/%Y")
-crep_data <- rename(crep, pugap_code = "pu_gap_code")
+crep <- rename(crep, "pugap_code" = "pu_gap_code")
 
 
 ### Combine kasky station info with CREP data
-crep <- crep %>% select(c(pugap_code, reach_name, date))
+crep_data  <- crep %>% select(c(pugap_code, reach_name, date))
 basin_data <- basin %>% select(c(pugap_code, reach_name, date))
 
-# kasky_data <- bind_rows("crep_monitoring" = crep, "IDNR_basin_surveys" = basin_data, .id = "data_source")
+kasky_data_combined <- bind_rows("crep_monitoring" = crep_data, "IDNR_basin_surveys" = basin_data, .id = "data_source")
+kasky_data_combined <- unique(kasky_data_combined[c("data_source","pugap_code", "reach_name", "date")])
 
+### Combine Kasky stream attributes with combined basin data
+stream_attributes_table <- readxl::read_excel("Data/kasky_stream_lines_attributes_table.xlsx", sheet = 1)
+names(stream_attributes_table) <- str_to_lower(names(stream_attributes_table))
+stream_attributes_table <- rename(stream_attributes_table, "pugap_code" = "pu_gapcode")
+stream_attributes_table <- rename(stream_attributes_table, "order" = "order_")
+stream_attributes_table <- rename(stream_attributes_table, "arc" = "arc_")
+
+kasky_data_final <- dplyr::left_join(kasky_data_combined, stream_attributes_table, by = "pugap_code")
+
+###Plot it as a histogram
 
 # NOTE: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
