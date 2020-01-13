@@ -46,6 +46,7 @@ basin$station_code_wrong <- stringr::str_extract(basin$waterbody_station, ".*(?=
 ### The following code includes a quoting mechanism \Q...\E that allows you to exactly match user input b/c it treats all the characters in the ... are exact matches
 ### See the regular expressions stringr vinettes for more info <https://stringr.tidyverse.org/articles/regular-expressions.html>
 basin$station_code <- stringr::str_extract(basin$station_code_wrong,paste0("(?<=\\Q",basin$dupe,"\\E).*"))
+basin$reach_name <- basin$station_code
 
 basin <- basin %>% select(-c(station_code_wrong, dupe))
 
@@ -53,8 +54,24 @@ basin <- basin %>% select(-c(station_code_wrong, dupe))
 
 basin <- dplyr::left_join(basin, kasky_stations)
 basin$gear <- if_else(is.na(basin$gear_used), basin$gear_type, basin$gear_used)
-basin_data <- basin %>% select(c(pugap_code, station_code, sample_start_date, species, count, gear))
+basin$date <- as.Date(basin$sample_start_date, format = "%m/%d/%Y")
+# basin_data <- basin %>% select(c(pugap_code, reach_name, date, species, count, gear))
+
+#il_fish_traits <- read.csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Illinois_fish_traits_complete.csv", na = "", stringsAsFactors = F)
 
 
-# TODO: Get Basin stations matched with locality info from kasky_stations
-# TODO: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
+### Read in CREP fish data
+crep <- read_csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Fish_Abundance_Data.csv", na = "", col_names = T)
+names(crep) <- str_to_lower(names(crep))
+crep$date <- as.Date(crep$event_date, format = "%m/%d/%Y")
+crep_data <- rename(crep, pugap_code = "pu_gap_code")
+
+
+### Combine kasky station info with CREP data
+crep <- crep %>% select(c(pugap_code, reach_name, date))
+basin_data <- basin %>% select(c(pugap_code, reach_name, date))
+
+# kasky_data <- bind_rows("crep_monitoring" = crep, "IDNR_basin_surveys" = basin_data, .id = "data_source")
+
+
+# NOTE: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
