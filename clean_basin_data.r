@@ -25,28 +25,38 @@ names(basin) <- str_to_lower(names(basin))
 stations <- read_csv(file = "Data/waterbody_stations_20101104.csv", col_names = T)
 kasky_stations <- stations %>% filter(PU_CODE == "kasky")
 names(kasky_stations) <- str_to_lower(names(kasky_stations))
+kasky_stations<- rename(kasky_stations, station_code = station_co)
 
-## Convert basin "Waterbody Station" to readable format. 
-basin_stations <- unique(basin$`waterbody_station`) %>% tibble()
-basin_stations <- rename(basin_stations, Waterbody_Station = .)
-basin_stations$Station_Name <- stringr::str_extract(basin_stations$Waterbody_Station, ".*(?=:)")
-basin_stations$Waterbody_Location <- stringr::str_extract(basin_stations$Waterbody_Station, "(?<=:).*")
+### Convert basin "Waterbody Station" to readable format. 
+# basin_stations <- unique(basin$waterbody_station) %>% tibble()
+# basin_stations <- rename(basin_stations, waterbody_station = .)
+# basin_stations$station_name <- stringr::str_extract(basin_stations$waterbody_station, ".*(?=:)")
+# basin_stations$waterbody_location <- stringr::str_extract(basin_stations$waterbody_station, "(?<=:).*")
+# 
+# basin_stations$waterbody <- unique(basin$waterbody)
+# basin_stations$dupe <- stringr::str_extract(basin_stations$waterbody)
+
+#### Pull Waterbody Code from Waterbody Station:
+basin$dupe <- stringr::str_extract(basin$waterbody, "(?<=[:space:]\\([:space:])[:graph:]+")
+basin$dupe <- stringr::str_replace(basin$dupe, "\\)", "-")
+basin$station_location <- stringr::str_extract(basin$waterbody_station, "(?<=:).*")  
+basin$station_code_wrong <- stringr::str_extract(basin$waterbody_station, ".*(?=:)")
+
+### The following code includes a quoting mechanism \Q...\E that allows you to exactly matach user input b/c all the characters in the ... are exact matches
+### See teh regular expressions stringr vinettes for more info <https://stringr.tidyverse.org/articles/regular-expressions.html>
+basin$station_code <- stringr::str_extract(basin$station_code_wrong,paste0("(?<=\\Q",basin$dupe,"\\E).*"))
+
+basin <- -c(station_code_wrong, dupe)
+
+
 
 ####
-##
 # Extract from Basin$Waterbody the string in () call it something like "dupe"
 # The write a bit that looks for "dupe" before a "-" and extract out the info after the "-" in basin_stations$Station_Name
 
 
-# Split the station 
-# stringr::str_split(basin_stations$Station_Name, "[:graph:]+", n = 2)
-
 # Get Basin stations matched with locality info from kasky_stations
 
-
-
-
-#Hello   
 
 
 
