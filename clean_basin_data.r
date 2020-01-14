@@ -81,24 +81,56 @@ stream_attributes_table <- rename(stream_attributes_table, "order" = "order_")
 stream_attributes_table <- rename(stream_attributes_table, "arc" = "arc_")
 
 kasky_data_final <- dplyr::left_join(kasky_data_combined, stream_attributes_table, by = "pugap_code")
+kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_source, "crep_monitoring", "CREP Monitoring")
+kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_source, "IDNR_basin_surveys", "IDNR Basin Surveys")
+kasky_data_final <- kasky_data_final %>% mutate(data_source = as_factor(data_source))
 
 ###Plot it as a histogram
 ## Stream Link
 ggplot2::ggplot(kasky_data_final, aes(x = link, color = data_source, fill=data_source)) +
-  geom_histogram(breaks = c(5,10,20,30,40,50, 60, 70 ,80, 90, 100), position="identity", alpha=0.5) +
-  theme(legend.position="top")
+  geom_histogram(breaks = c(5,10,20,40,80,160), position="identity", alpha=0.5) +
+  theme(legend.position="top") +
+  labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Link", y = "Count", fill = "Survey Type")
 
+ggplot2::ggplot(kasky_data_final, aes(x = link, fill=data_source)) +
+  geom_histogram(breaks = c(0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,100,200), position="identity", alpha=0.5) +
+  theme(legend.position="top") +
+  labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Link", y = "Count", fill = "Survey Type")
 
 ggplot2::ggplot(kasky_data_final, aes(x = link, color = data_source, fill=data_source)) +
-  geom_histogram(breaks = c(5,10,20,30,40,50, 60, 70 ,80, 90, 100), color = "black", fill= "white") +
+  geom_histogram(breaks = c(5,10,20,40,80, 160), position="identity", alpha=0.5)  +
   facet_grid(data_source ~.) +
   labs(title="Weight histogram plot",x="Link Size", y = "Count")
 
 ## Stream Order
-ggplot2::ggplot(kasky_data_final, aes(x = order, color = data_source, fill=data_source)) +
-  geom_histogram(breaks = c(1,2,3,4,5,6,7,8,9,10), position="identity", alpha=0.5) +
+ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
+      geom_histogram(breaks = c(1,2,3,4,5,6,7,8), position="identity", alpha=0.5) +
+      theme(legend.position="top")+
+      labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type")
+
+ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
+  geom_histogram(binwidth = 1, position="identity", alpha=0.5) +
   theme(legend.position="top")+
-  labs(title="Community Sampling Events Histogram Plot",x="Stream Order", y = "Count")
+  labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type")
 
+###Box Plots
+qplot(data_source, order, data = kasky_data_final, 
+      geom= "boxplot", fill = data_source)
 
+# ##Summary StatS
+kasky_data_final %>% group_by(data_source) %>% 
+  summarise(mean_order = mean(kasky_data_final$order),
+            mean_link = mean(kasky_data_final$link)
+  )
+
+kasky_data_final %>% group_by(data_source) %>% purrr::map(summary)
 # NOTE: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
+
+
+
+
+
+
+
+
+
