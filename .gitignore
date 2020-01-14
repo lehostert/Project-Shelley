@@ -39,6 +39,9 @@ vignettes/*.pdf
 .Renviron
 .Rproj.user
 
-#MS Office files
+# MS Office files
 .xls
 .xlsx
+
+# Output files
+.pdf
