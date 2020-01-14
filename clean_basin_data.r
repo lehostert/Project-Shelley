@@ -25,25 +25,22 @@ names(basin) <- str_to_lower(names(basin))
 stations <- read_csv(file = "Data/waterbody_stations_20101104.csv", col_names = T)
 kasky_stations <- stations %>% filter(PU_CODE == "kasky")
 names(kasky_stations) <- str_to_lower(names(kasky_stations))
-
-## Convert basin "Waterbody Station" to readable format. 
-basin_stations <- unique(basin$`Waterbody Station`) %>% tibble()
-basin_stations <- rename(basin_stations, Waterbody_Station = .)
-basin_stations$Station_Name <- stringr::str_extract(basin_stations$Waterbody_Station, ".*(?=:)")
-basin_stations$Waterbody_Location <- stringr::str_extract(basin_stations$Waterbody_Station, "(?<=:).*")
-
-# Split the station 
-stringr::str_split(basin_stations$Station_Name, "[:graph:]+", n = 2)
-
-# Get Basin stations matched with locality info from kasky_stations
+kasky_stations<- rename(kasky_stations, station_code = station_co)
 
 
+#### Pull Waterbody Code from Waterbody Station:
+basin$dupe <- stringr::str_extract(basin$waterbody, "(?<=[:space:]\\([:space:])[:graph:]+")
+basin$dupe <- stringr::str_replace(basin$dupe, "\\)", "-")
+basin$station_location <- stringr::str_extract(basin$waterbody_station, "(?<=:).*")  
+basin$station_code_wrong <- stringr::str_extract(basin$waterbody_station, ".*(?=:)")
 
-##
-names(kasky_stations) <- str_to_lower(names(kasky_stations))
+### The following code includes a quoting mechanism \Q...\E that allows you to exactly matach user input b/c all the characters in the ... are exact matches
+### See the regular expressions stringr vinettes for more info <https://stringr.tidyverse.org/articles/regular-expressions.html>
+basin$station_code <- stringr::str_extract(basin$station_code_wrong,paste0("(?<=\\Q",basin$dupe,"\\E).*"))
+
+basin <- -c(station_code_wrong, dupe)
 
 
 
-
-## PU_Gap, Reach, Date, Species, Count
-
+# TODO: Get Basin stations matched with locality info from kasky_stations
+# TODO: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
