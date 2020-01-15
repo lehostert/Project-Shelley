@@ -10,8 +10,15 @@ library(tidyverse)
 # I will also need to compile a file that ties the basin surveys to PU_Gap codes in kasky.
 ## See waterbody_stations_2010 csv from ArcGIS Attribute table atrribute table
 # Then join the table of size info with that of the basin + CREP location info via PU_Gap code
+#Godspeed
 
 ### Read in basin data from IDNR database and combine into one df
+
+# on Mac Bison location is "smb://INHS-bison.inhs.illinois.edu/"
+# on Windows Bison Location is "//INHS-Bison/"
+# TODO how can I remedy running this in both Windows and Mac?
+# TODO change data file paths to pull from server folder for example:
+# basin_1 <- readxl::read_excel(path = "//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Project_Shelley/Data/basin_survey_data_kaskaskia_il.xlsx", sheet = 1)
 basin_1 <- readxl::read_excel(path = "Data/basin_survey_data_kaskaskia_il.xlsx", sheet = 1)
 basin_2 <- readxl::read_excel(path = "Data/basin_survey_data_kaskaskia_il.xlsx", sheet = 2)
 basin_3 <- readxl::read_excel(path = "Data/basin_survey_data_kaskaskia_il.xlsx", sheet = 3)
@@ -110,9 +117,10 @@ ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
 
 ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
   geom_histogram(binwidth = 1, position="identity", alpha=0.5) +
-  theme(legend.position="top")+
+  theme(legend.position="top", text = element_text(size=20)) +
   labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type")
 
+ggplot2::ggsave(Kaskaskia_Basin_Community_Sampling_by_stream_order, device = "tiff")
 ###Box Plots
 qplot(data_source, order, data = kasky_data_final, 
       geom= "boxplot", fill = data_source)
@@ -125,8 +133,6 @@ kasky_data_final %>% group_by(data_source) %>%
 
 kasky_data_final %>% group_by(data_source) %>% purrr::map(summary)
 # NOTE: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
-
-
 
 
 
