@@ -66,15 +66,25 @@ basin$date <- as.Date(basin$sample_start_date, format = "%m/%d/%Y")
 #il_fish_traits <- read.csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Illinois_fish_traits_complete.csv", na = "", stringsAsFactors = F)
 
 
-### Read in CREP fish data
+### Read in CREP fish data 2013-2018
 crep <- read_csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Fish_Abundance_Data.csv", na = "", col_names = T)
 names(crep) <- str_to_lower(names(crep))
 crep$date <- as.Date(crep$event_date, format = "%m/%d/%Y")
 crep <- rename(crep, "pugap_code" = "pu_gap_code")
+crep_data  <- crep %>% select(c(pugap_code, reach_name, date))
 
+### Read in CREP fish data 2019
+crep_2019 <- read_csv("~/CREP/Analysis/Project-Shelley/Data/CREP_Sites_2019.csv", na = "", col_names = T)
+names(crep_2019) <- str_to_lower(names(crep_2019))
+crep_2019$date <- as.Date(crep_2019$event_date, format = "%m/%d/%Y")
+crep_2019 <- rename(crep_2019, "pugap_code" = "pu_gap_code")
+crep_data_2019  <- crep_2019 %>% select(c(pugap_code, reach_name, date)) %>% drop_na()
+
+### combine 2013-2018 and 2019 data together
+crep_data_combined <- bind_rows("crep_2013-2018" = crep_data, "crep_2019" = crep_data_2019, .id = "crep_year")
+crep_data <- crep_data_combined %>% select(c(pugap_code, reach_name, date))
 
 ### Combine kasky station info with CREP data
-crep_data  <- crep %>% select(c(pugap_code, reach_name, date))
 basin_data <- basin %>% select(c(pugap_code, reach_name, date))
 
 kasky_data_combined <- bind_rows("crep_monitoring" = crep_data, "IDNR_basin_surveys" = basin_data, .id = "data_source")
@@ -92,46 +102,37 @@ kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_sourc
 kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_source, "IDNR_basin_surveys", "IDNR Basin Surveys")
 kasky_data_final <- kasky_data_final %>% mutate(data_source = as_factor(data_source))
 
+### Get some summary stats
+kasky_data_final %>% group_by(data_source) %>% purrr::map(summary)
+
 ###Plot it as a histogram
 ## Stream Link
-ggplot2::ggplot(kasky_data_final, aes(x = link, color = data_source, fill=data_source)) +
-  geom_histogram(breaks = c(5,10,20,40,80,160), position="identity", alpha=0.5) +
-  theme(legend.position="top") +
-  labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Link", y = "Count", fill = "Survey Type")
 
 ggplot2::ggplot(kasky_data_final, aes(x = link, fill=data_source)) +
   geom_histogram(breaks = c(0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,100,200), position="identity", alpha=0.5) +
   theme(legend.position="top") +
   labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Link", y = "Count", fill = "Survey Type")
 
-ggplot2::ggplot(kasky_data_final, aes(x = link, color = data_source, fill=data_source)) +
-  geom_histogram(breaks = c(5,10,20,40,80, 160), position="identity", alpha=0.5)  +
-  facet_grid(data_source ~.) +
-  labs(title="Weight histogram plot",x="Link Size", y = "Count")
-
 ## Stream Order
-ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
-      geom_histogram(breaks = c(1,2,3,4,5,6,7,8), position="identity", alpha=0.5) +
-      theme(legend.position="top")+
-      labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type")
 
 ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
   geom_histogram(binwidth = 1, position="identity", alpha=0.5) +
-  theme(legend.position="top", text = element_text(size=20)) +
-  labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type")
+  theme(legend.position="top",plot.title = element_text(hjust=0.5) ,text = element_text(size=18, hjust=0.5)) +
+  labs(title="Kaskaskia Basin Fish Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type")
 
-ggplot2::ggsave(Kaskaskia_Basin_Community_Sampling_by_stream_order, device = "tiff")
+ggplot2::ggsave("Kaskaskia_Basin_Community_Sampling_by_stream_order", device = "tiff")
+
 ###Box Plots
 qplot(data_source, order, data = kasky_data_final, 
       geom= "boxplot", fill = data_source)
 
-# ##Summary StatS
+#### Additional Summary StatS
 kasky_data_final %>% group_by(data_source) %>% 
   summarise(mean_order = mean(kasky_data_final$order),
             mean_link = mean(kasky_data_final$link)
   )
 
-kasky_data_final %>% group_by(data_source) %>% purrr::map(summary)
+
 # NOTE: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
 
 
