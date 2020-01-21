@@ -61,8 +61,10 @@ basin <- basin %>% select(-c(station_code_wrong, dupe))
 basin <- dplyr::left_join(basin, kasky_stations, by = "station_code")
 basin$gear <- if_else(is.na(basin$gear_used), basin$gear_type, basin$gear_used)
 basin$date <- as.Date(basin$sample_start_date, format = "%m/%d/%Y")
-# basin_data <- basin %>% select(c(pugap_code, reach_name, date, species, count, gear))
 
+#output a file that contains the combined kaskaskia basin survey data. 
+write_csv(basin, "Data/idnr_kaskaskia_basin_survey_data_1997-2012.csv", na = "")
+# basin_data <- basin %>% select(c(pugap_code, reach_name, date, species, count, gear))
 #il_fish_traits <- read.csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Illinois_fish_traits_complete.csv", na = "", stringsAsFactors = F)
 
 
