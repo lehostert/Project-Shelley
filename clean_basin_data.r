@@ -108,17 +108,19 @@ kasky_data_final %>% group_by(data_source) %>% purrr::map(summary)
 ###Plot it as a histogram
 ## Stream Link
 
-ggplot2::ggplot(kasky_data_final, aes(x = link, fill=data_source)) +
-  geom_histogram(breaks = c(0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,100,200), position="identity", alpha=0.5) +
-  theme(legend.position="top") +
-  labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Link", y = "Count", fill = "Survey Type")
+# ggplot2::ggplot(kasky_data_final, aes(x = link, fill=data_source)) +
+#   geom_histogram(breaks = c(0,1,2,3,4,5,6,7,8,9,10,20,30,40,50,100,200), position="identity", alpha=0.5) +
+#   theme(legend.position="top") +
+#   labs(title="Kaskaskia Basin Community Sampling Locations",x="Stream Link", y = "Count", fill = "Survey Type")
 
 ## Stream Order
 
 ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
   geom_histogram(binwidth = 1, position="identity", alpha=0.5) +
   theme(legend.position="top",plot.title = element_text(hjust=0.5) ,text = element_text(size=18, hjust=0.5)) +
-  labs(title="Kaskaskia Basin Fish Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type")
+  labs(title="Kaskaskia Basin Fish Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type") +
+  scale_color_manual(values=c("dodgerblue", "grey43", "#56B4E9")) +
+  scale_fill_manual(values=c("dodgerblue", "grey43", "#56B4E9"))
 
 ggplot2::ggsave("Kaskaskia_Basin_Community_Sampling_by_stream_order", device = "tiff")
 
@@ -134,7 +136,6 @@ kasky_data_final %>% group_by(data_source) %>%
 
 
 # NOTE: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
-
 
 
 
