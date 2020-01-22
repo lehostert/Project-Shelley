@@ -16,7 +16,7 @@ library(tidyverse)
 
 # on Mac Bison location is "smb://INHS-bison.inhs.illinois.edu/"
 # on Windows Bison Location is "//INHS-Bison/"
-# TODO how can I remedy running this in both Windows and Mac?
+# TODO how can I remedy running this in both Windows and Mac? the Bison connection between Windows and Mac is different.
 # TODO change data file paths to pull from server folder for example:
 # basin_1 <- readxl::read_excel(path = "//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Project_Shelley/Data/basin_survey_data_kaskaskia_il.xlsx", sheet = 1)
 basin_1 <- readxl::read_excel(path = "Data/basin_survey_data_kaskaskia_il.xlsx", sheet = 1)
@@ -56,16 +56,51 @@ basin$station_code <- stringr::str_extract(basin$station_code_wrong,paste0("(?<=
 basin$reach_name <- basin$station_code
 basin <- basin %>% select(-c(station_code_wrong, dupe))
 
-### Combine kasky station info with basin data and simplifly full basin survey dataset to simple dataset
+### Combine kasky station info with basin data and simplifly full basin survey dataset, clean up datam, and write to .csv
 
 basin <- dplyr::left_join(basin, kasky_stations, by = "station_code")
 basin$gear <- if_else(is.na(basin$gear_used), basin$gear_type, basin$gear_used)
 basin$date <- as.Date(basin$sample_start_date, format = "%m/%d/%Y")
 
+il_fish_traits <- read.csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Illinois_fish_traits_complete.csv", na = "", stringsAsFactors = F)
+il_fish_list <- il_fish_traits %>% select(c(Fish_Species_Code, Fish_Species_Common, Fish_Species_Scientific))
+names(il_fish_list) <- str_to_lower(names(il_fish_list))
+
+basin <- rename(basin, fish_species_common = species)
+basin$fish_species_common <- stringr::str_to_lower(basin$fish_species_common)
+# TODO consult Jeff regarding silvery minnow (western v. Mississippi) and silverjaw minnow x bigmouth shiner hybrid. 
+basin <- basin %>% mutate(fish_species_common = replace(fish_species_common, fish_species_common == 'mosquitofish', 'western mosquitofish'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'bluegill x green sunfish', 'bluegill x green sunfish hybrid'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'carp', 'common carp'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'longear sunfish x green sunfish', 'longear sunfish x green sunfish hybrid'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'scp - silver carp', 'silver carp'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'longear sunfish x bluegill', 'longear sunfish x bluegill hybrid'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'carpsucker spp.', 'unidentified carpsucker'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'gar spp.', 'unidentified gar spp.'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'inland silversides', 'inland silverside'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'sunfish hybrid', 'unidentified sunfish hybrid'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'silvery minnow', 'unknown silvery minnow'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'bufffalo spp.', 'unidentified buffalo'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'silverjaw minnow x bigmouth shiner', 'unidentified notropis spp.'),
+                          fish_species_common = replace(fish_species_common, fish_species_common == 'carp x goldfish', 'common carp x goldfish hybrid')
+                          )
+
+# Add fish species codes and sci names
+basin <- full_join(basin, il_fish_list, by = "fish_species_common")
+
+#### TEST IT 
+# TODO delete this section after you fix notropis spp. and silvery minnow
+compare_fish_list <- basin %>% select(reach_name, gear, date, fish_species_common, fish_species_code, fish_species_scientific)
+NA_fish_list <- compare_fish_list %>% filter(is.na(fish_species_code))
+NA_fish_list <- as.data.frame(unique(NA_fish_list$fish_species_common))
+
+
+# Clean it up drop NA fish species and drop duplicate data
+basin_cleaned <- basin %>% drop_na(reach_name) %>% dplyr::distinct()
+
+
 #output a file that contains the combined kaskaskia basin survey data. 
-write_csv(basin, "Data/idnr_kaskaskia_basin_survey_data_1997-2012.csv", na = "")
-# basin_data <- basin %>% select(c(pugap_code, reach_name, date, species, count, gear))
-#il_fish_traits <- read.csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Illinois_fish_traits_complete.csv", na = "", stringsAsFactors = F)
+write_csv(basin_cleaned, "Data/idnr_kaskaskia_basin_survey_data_1997-2012.csv", na = "")
 
 
 ### Read in CREP fish data 2013-2018
@@ -87,7 +122,7 @@ crep_data_combined <- bind_rows("crep_2013-2018" = crep_data, "crep_2019" = crep
 crep_data <- crep_data_combined %>% select(c(pugap_code, reach_name, date))
 
 ### Combine kasky station info with CREP data
-basin_data <- basin %>% select(c(pugap_code, reach_name, date))
+basin_data <- basin_cleaned %>% select(c(pugap_code, reach_name, date))
 
 kasky_data_combined <- bind_rows("crep_monitoring" = crep_data, "IDNR_basin_surveys" = basin_data, .id = "data_source")
 kasky_data_combined <- unique(kasky_data_combined[c("data_source","pugap_code", "reach_name", "date")])
