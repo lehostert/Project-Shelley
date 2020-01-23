@@ -156,8 +156,8 @@ ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
   geom_histogram(binwidth = 1, position="identity", alpha=0.5) +
   theme(legend.position="top",plot.title = element_text(hjust=0.5) ,text = element_text(size=18, hjust=0.5)) +
   labs(title="Kaskaskia Basin Fish Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type") +
-  scale_color_manual(values=c("dodgerblue", "grey43", "#56B4E9")) +
-  scale_fill_manual(values=c("dodgerblue", "grey43", "#56B4E9"))
+  scale_color_manual(values=c("darkorchid1", "grey43", "#56B4E9")) +
+  scale_fill_manual(values=c("darkorchid1", "grey43", "#56B4E9"))
 
 ggplot2::ggsave("Kaskaskia_Basin_Community_Sampling_by_stream_order", device = "tiff")
 
