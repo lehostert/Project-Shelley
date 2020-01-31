@@ -61,13 +61,15 @@ basin <- basin %>% select(-c(station_code_wrong, dupe))
 basin <- dplyr::left_join(basin, kasky_stations, by = "station_code")
 basin$gear <- if_else(is.na(basin$gear_used), basin$gear_type, basin$gear_used)
 basin$date <- as.Date(basin$sample_start_date, format = "%m/%d/%Y")
+basin <- rename(basin, fish_species_common = species)
+basin$fish_species_common <- stringr::str_to_lower(basin$fish_species_common)
 
+### Read in IL fish traits. 
 il_fish_traits <- read.csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Illinois_fish_traits_complete.csv", na = "", stringsAsFactors = F)
 il_fish_list <- il_fish_traits %>% select(c(Fish_Species_Code, Fish_Species_Common, Fish_Species_Scientific))
 names(il_fish_list) <- str_to_lower(names(il_fish_list))
 
-basin <- rename(basin, fish_species_common = species)
-basin$fish_species_common <- stringr::str_to_lower(basin$fish_species_common)
+
 # TODO consult Jeff regarding silvery minnow (western v. Mississippi) and silverjaw minnow x bigmouth shiner hybrid. 
 basin <- basin %>% mutate(fish_species_common = replace(fish_species_common, fish_species_common == 'mosquitofish', 'western mosquitofish'),
                           fish_species_common = replace(fish_species_common, fish_species_common == 'bluegill x green sunfish', 'bluegill x green sunfish hybrid'),
@@ -86,7 +88,9 @@ basin <- basin %>% mutate(fish_species_common = replace(fish_species_common, fis
                           )
 
 # Add fish species codes and sci names
-basin <- full_join(basin, il_fish_list, by = "fish_species_common")
+basin <- left_join(basin, il_fish_list, by = "fish_species_common")
+
+#TODO consider changing full join to left? join so that you do not end up with more spp. than basin info. 
 
 #### TEST IF all fish on list are matched with something in the IL fish list.  
 # TODO delete this section if you no longer need it
@@ -94,34 +98,47 @@ basin <- full_join(basin, il_fish_list, by = "fish_species_common")
 # NA_fish_list <- compare_fish_list %>% filter(is.na(fish_species_code))
 # NA_fish_list <- as.data.frame(unique(NA_fish_list$fish_species_common))
 
-#### Count mismatch list ####
-county_check$same <- identical(basin$county.x, basin$county.y)
-county_check$same <- if_else(basin$county.x==basin$county.y, "TRUE", "FALSE")
-county_mismatch <- county_check %>% filter(same == "FALSE")
-View(county_mismatch)
+#### County mismatch list ####
+# county_check$same <- identical(basin$county.x, basin$county.y)
+# county_check$same <- if_else(basin$county.x==basin$county.y, "TRUE", "FALSE")
+# county_mismatch <- county_check %>% filter(same == "FALSE")
+# View(county_mismatch)
+# 
+# county_mismatch_list <- basin %>% select(c("survey", "survey_year","survey_type","county.x","waterbody_code","waterbody_station",
+#                                            "ibi_region","ibi_slope","gear_type","gear_used","sample_type","sample_start_date",
+#                                            "waterbody","new_loc","county.y","station_code","reach_name","lat_d","long_d","pugap_code"))
+# 
+# county_mismatch_list <- rename(county_mismatch_list, county.basin_data = county.x)
+# county_mismatch_list <- rename(county_mismatch_list, county.GIS_data = county.y)
+# 
+# county_mismatch_list <- county_mismatch_list %>% select(c("survey", "survey_year","survey_type","county.basin_data", "county.GIS_data","waterbody_code","waterbody_station",
+#                                                           "ibi_region","ibi_slope","gear_type","gear_used","sample_type","sample_start_date",
+#                                                           "waterbody","new_loc","station_code","reach_name","lat_d","long_d","pugap_code"))
+# 
+# county_mismatch_list <- unique(county_mismatch_list)
+# county_mismatch_list <- county_mismatch_list %>% filter(county.basin_data != county.GIS_data)
 
-county_mismatch_list <- basin %>% select(c("survey", "survey_year","survey_type","county.x","waterbody_code","waterbody_station",
-                                           "ibi_region","ibi_slope","gear_type","gear_used","sample_type","sample_start_date",
-                                           "waterbody","new_loc","county.y","station_code","reach_name","lat_d","long_d","pugap_code"))
 
-county_mismatch_list <- rename(county_mismatch_list, county.basin_data = county.x)
-county_mismatch_list <- rename(county_mismatch_list, county.GIS_data = county.y)
-
-county_mismatch_list <- county_mismatch_list %>% select(c("survey", "survey_year","survey_type","county.basin_data", "county.GIS_data","waterbody_code","waterbody_station",
-                                                          "ibi_region","ibi_slope","gear_type","gear_used","sample_type","sample_start_date",
-                                                          "waterbody","new_loc","station_code","reach_name","lat_d","long_d","pugap_code"))
-
-county_mismatch_list <- unique(county_mismatch_list)
-county_mismatch_list <- county_mismatch_list %>% filter(county.basin_data != county.GIS_data)
-
-#### Continue Cleaning ####
 # Clean it up drop NA fish species and drop duplicate data
+
+#### Check for duplicate data ####
+
+basin$duplicated <- duplicated(basin)
+
+duplicate_list <- basin %>% filter(duplicated == 'TRUE') 
+
+duplicate_site_list <- basin %>% filter(duplicated == 'TRUE') %>% 
+  select(c(survey_year, reach_name, waterbody_station ,sample_start_date, fish_species_common, fish_species_code, count, length, weight)) %>% 
+  dplyr::distinct()
+
+
 basin_cleaned <- basin %>% drop_na(reach_name) %>% dplyr::distinct()
 
 
 #output a file that contains the combined kaskaskia basin survey data. 
 write_csv(basin_cleaned, "Data/idnr_kaskaskia_basin_survey_data_1997-2012.csv", na = "")
 
+#### Continue With Analysis ####
 
 ### Read in CREP fish data 2013-2018
 crep <- read_csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Fish_Abundance_Data.csv", na = "", col_names = T)
