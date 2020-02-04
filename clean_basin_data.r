@@ -133,7 +133,10 @@ duplicate_site_list <- basin %>% filter(duplicated == 'TRUE') %>%
 
 
 basin_cleaned <- basin %>% drop_na(reach_name) %>% dplyr::distinct()
-
+# TODO before you export this bet sure to change count to "Fish_Species_Count" and string to ADA style. 
+# basin <- rename(basin, Fish_Species_Count == count)
+# basin <- rename(basin, Event_Date == date)
+# basin$date <- as.Date(basin$event_date, format = "%m/%d/%Y")
 
 #output a file that contains the combined kaskaskia basin survey data. 
 write_csv(basin_cleaned, "Data/idnr_kaskaskia_basin_survey_data_1997-2012.csv", na = "")
