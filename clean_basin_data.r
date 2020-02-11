@@ -122,47 +122,40 @@ basin <- left_join(basin, il_fish_list, by = "fish_species_common")
 # Clean it up drop NA fish species and drop duplicate data
 
 #### Check for duplicate data ####
-
-basin$duplicated <- duplicated(basin)
-
-duplicate_list <- basin %>% filter(duplicated == 'TRUE') 
-
-duplicate_site_list <- basin %>% filter(duplicated == 'TRUE') %>% 
-  select(c(survey_year, reach_name, waterbody_station ,sample_start_date, fish_species_common, fish_species_code, count, length, weight)) %>% 
-  dplyr::distinct()
-
-
-basin_cleaned <- basin %>% drop_na(reach_name) %>% dplyr::distinct()
+# 
+# basin$duplicated <- duplicated(basin)
+# 
+# duplicate_list <- basin %>% filter(duplicated == 'TRUE') 
+# 
+# duplicate_site_list <- basin %>% filter(duplicated == 'TRUE') %>% 
+#   select(c(survey_year, reach_name, waterbody_station ,sample_start_date, fish_species_common, fish_species_code, count, length, weight)) %>% 
+#   dplyr::distinct()
+# 
+# 
+# basin_cleaned <- basin %>% drop_na(reach_name) %>% dplyr::distinct()
 # TODO before you export this bet sure to change count to "Fish_Species_Count" and string to ADA style. 
 # basin <- rename(basin, Fish_Species_Count == count)
 # basin <- rename(basin, Event_Date == date)
 # basin$date <- as.Date(basin$event_date, format = "%m/%d/%Y")
 
-#output a file that contains the combined kaskaskia basin survey data. 
-write_csv(basin_cleaned, "Data/idnr_kaskaskia_basin_survey_data_1997-2012.csv", na = "")
+#### output a file that contains the combined kaskaskia basin survey data. 
+# write_csv(basin_cleaned, "Data/idnr_kaskaskia_basin_survey_data_1997-2012.csv", na = "")
 
 #### Continue With Analysis ####
 
-### Read in CREP fish data 2013-2018
-crep <- read_csv("//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Fish_Abundance_Data.csv", na = "", col_names = T)
+### Read in CREP fish data 2013-2019
+network_prefix <- "//INHS-Bison"
+crep <- read.csv(paste0(network_prefix,"/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Fish_Abundance_Data_CREP_2013-2019.csv"), na = "", stringsAsFactors = F)
 names(crep) <- str_to_lower(names(crep))
 crep$date <- as.Date(crep$event_date, format = "%m/%d/%Y")
 crep <- rename(crep, "pugap_code" = "pu_gap_code")
 crep_data  <- crep %>% select(c(pugap_code, reach_name, date))
 
-### Read in CREP fish data 2019
-crep_2019 <- read_csv("~/CREP/Analysis/Project-Shelley/Data/CREP_Sites_2019.csv", na = "", col_names = T)
-names(crep_2019) <- str_to_lower(names(crep_2019))
-crep_2019$date <- as.Date(crep_2019$event_date, format = "%m/%d/%Y")
-crep_2019 <- rename(crep_2019, "pugap_code" = "pu_gap_code")
-crep_data_2019  <- crep_2019 %>% select(c(pugap_code, reach_name, date)) %>% drop_na()
+# kasky_data_final %>% group_by(data_source) %>% purrr::map(summary)
 
-### combine 2013-2018 and 2019 data together
-crep_data_combined <- bind_rows("crep_2013-2018" = crep_data, "crep_2019" = crep_data_2019, .id = "crep_year")
-crep_data <- crep_data_combined %>% select(c(pugap_code, reach_name, date))
 
 ### Combine kasky station info with CREP data
-basin_data <- basin_cleaned %>% select(c(pugap_code, reach_name, date))
+basin_data <- basin_ready %>% select(c(pugap_code, reach_name, date))
 
 kasky_data_combined <- bind_rows("crep_monitoring" = crep_data, "IDNR_basin_surveys" = basin_data, .id = "data_source")
 kasky_data_combined <- unique(kasky_data_combined[c("data_source","pugap_code", "reach_name", "date")])
@@ -175,8 +168,8 @@ stream_attributes_table <- rename(stream_attributes_table, "order" = "order_")
 stream_attributes_table <- rename(stream_attributes_table, "arc" = "arc_")
 
 kasky_data_final <- dplyr::left_join(kasky_data_combined, stream_attributes_table, by = "pugap_code")
-kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_source, "crep_monitoring", "CREP Monitoring")
-kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_source, "IDNR_basin_surveys", "IDNR Basin Surveys")
+# kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_source, "crep_monitoring", "CREP Monitoring")
+# kasky_data_final$data_source <- stringr::str_replace(kasky_data_final$data_source, "IDNR_basin_surveys", "IDNR Basin Surveys")
 kasky_data_final <- kasky_data_final %>% mutate(data_source = as_factor(data_source))
 
 ### Get some summary stats
