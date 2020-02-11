@@ -35,8 +35,22 @@ duplicate_sum_bdf <- bdf %>% group_by(survey, survey_year, survey_type, gear, sa
 sample_summary_bdf <- duplicate_sum_bdf %>% 
   select(-c(dupe)) %>% 
   rename(duplicates = n) %>% 
-  right_join(sample_sum_bdf)
+  right_join(sample_sum_bdf) %>% 
+  tidyr::replace_na(list(duplicates = 0))
 
 sample_summary_bdf$fate <- if_else(sample_summary_bdf$duplicates >= 0.5*(sample_summary_bdf$observations), "drop", "keep")
 
+basin$fate <- sample_summary_bdf %>% 
+  dplyr::select(x = count, nm = Site_ID) %>% 
+  purrr::pmap(set_names) %>% 
+  unlist
+
+tdf <- full_join(sample_summary_bdf, basin)
+
+# dataframe with no erroneous duplications detected
+basin_ready <- tdf %>% filter(fate == "keep")
+# dateframe with all records that have questionable duplications
+basin_unfit <- tdf %>% filter(fate == "drop")
+
 #### BELOW THERE BE DRAGONS ####
+summarise(sample_summary_bdf)
