@@ -26,6 +26,35 @@ basin_ready_ef <- tdf %>% filter(gear_type == "Electro Fishing", fate == "keep")
 # dateframe with all records that have questionable duplications
 basin_unfit_ef <- tdf %>% filter(gear_type == "Electro Fishing", fate != "keep")
 
+
+sampling_event_ready_list <- basin_ready_ef %>% 
+  select(c("reach_name","date")) %>% 
+  unique()
+
+sampling_event_unfit_list <- basin_unfit_ef %>% 
+  ungroup() %>% 
+  select(c("reach_name","date")) %>% 
+  unique()
+
+
+sampling_site_list <- basin %>% 
+  filter(gear_type == "Electro Fishing") %>% 
+  select("reach_name") %>% 
+  unique()
+
+sampling_event_list <- basin %>% 
+  filter(gear_type == "Electro Fishing") %>% 
+  select("reach_name", "date") %>% 
+  unique()
+
+sampling_site_full <- basin %>% 
+  select("reach_name") %>% 
+  unique()
+
+crep_event_list <- crep_data %>% 
+  select("reach_name") %>% 
+  unique()
+
 write_csv(basin_ready_ef, "Data/idnr_kaskaskia_basin_survey_data_1997-2012_READY_ef.csv", na = "")
 write_csv(basin_unfit_ef, "Data/idnr_kaskaskia_basin_survey_data_1997-2012_DUPLICATES_ef.csv", na = "")
 

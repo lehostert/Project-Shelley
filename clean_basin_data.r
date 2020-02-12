@@ -155,7 +155,9 @@ crep_data  <- crep %>% select(c(pugap_code, reach_name, date))
 
 
 ### Combine kasky station info with CREP data
-basin_data <- basin_ready %>% select(c(pugap_code, reach_name, date))
+basin_data <- basin_ready_ef %>% 
+  ungroup() %>% 
+  select(c(pugap_code, reach_name, date))
 
 kasky_data_combined <- bind_rows("crep_monitoring" = crep_data, "IDNR_basin_surveys" = basin_data, .id = "data_source")
 kasky_data_combined <- unique(kasky_data_combined[c("data_source","pugap_code", "reach_name", "date")])
@@ -188,11 +190,11 @@ kasky_data_final %>% group_by(data_source) %>% purrr::map(summary)
 ggplot2::ggplot(kasky_data_final, aes(x = order, fill= data_source)) +
   geom_histogram(binwidth = 1, position="identity", alpha=0.5) +
   theme(legend.position="top",plot.title = element_text(hjust=0.5) ,text = element_text(size=18, hjust=0.5)) +
-  labs(title="Kaskaskia Basin Fish Community Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type") +
+  labs(title="Kaskaskia Basin Fish EF Sampling Locations",x="Stream Order", y = "Count", fill = "Survey Type") +
   scale_color_manual(values=c("darkorchid1", "grey43", "#56B4E9")) +
   scale_fill_manual(values=c("darkorchid1", "grey43", "#56B4E9"))
 
-ggplot2::ggsave("Kaskaskia_Basin_Community_Sampling_by_stream_order", device = "tiff")
+ggplot2::ggsave("Kaskaskia_Basin_Community_Sampling_by_stream_order_fitdata", device = "tiff")
 
 ###Box Plots
 qplot(data_source, order, data = kasky_data_final, 
