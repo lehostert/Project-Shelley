@@ -16,7 +16,7 @@ bdf_summary <- duplicate_sum_bdf %>%
   right_join(sample_sum_bdf) %>% 
   tidyr::replace_na(list(duplicates = 0))
 
-bdf_summary$fate <- if_else(bdf_summary$duplicates > 0.5*(bdf_summary$observations), "drop_check", 
+bdf_summary$fate  <- if_else(bdf_summary$duplicates > 0.5*(bdf_summary$observations), "drop_check", 
                             if_else(bdf_summary$duplicates == 0.5*(bdf_summary$observations), "drop_double", "keep"))
 
 tdf <- full_join(bdf_summary, basin)
