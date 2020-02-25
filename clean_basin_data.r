@@ -210,7 +210,13 @@ kasky_data_final %>% group_by(data_source) %>%
 # NOTE: Get basin survey data in form with only PU_Gap, Reach, Date, Species, Count
 
 
+#### Levi Drake's Basin Data ####
+drake <- readxl::read_xlsx("~/CREP/Analysis/Project-Shelley/Data/Kaskaskia_basin_survey_fish_samples_LeviDrake.xlsx", sheet = 1)
+names(drake) <- str_to_lower(names(drake))
+drake$Event_Date <- as.Date(drake$maxofdate, format = "%d-m-%y") 
+drake <- rename(drake, "Reach_Name" = "code", "Fish_Species_Code" = "spc", "Fish_Species_Count" = "sumofsumofn")
+drake_data  <- drake %>% select(c(pugap_code, Reach_Name, Event_Date, Fish_Species_Code, Fish_Species_Count))
 
-
+write_csv(drake_data, path = "//INHS-Bison/ResearchData/Groups/Kaskaskia_CREP/Analysis/Fish/Data/Fish_Abundance_Data_Drake_1991-2007.csv")
 
 
